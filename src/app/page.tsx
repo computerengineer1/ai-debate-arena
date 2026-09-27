@@ -14,6 +14,11 @@ import RippleButton from "@/components/ui/RippleButton";
 import LanguagePicker from "@/components/ui/LanguagePicker";
 import { useT } from "@/lib/client/useT";
 import { useLangStore } from "@/store/useLangStore";
+import { useQuota } from "@/lib/client/useQuota";
+import ProfileMenu from "@/components/ui/ProfileMenu";
+import AuthModal from "@/components/ui/AuthModal";
+import PricingModal from "@/components/ui/PricingModal";
+import AdSlot from "@/components/ui/AdSlot";
 import type { DebateConfig } from "@/lib/types";
 
 const LandingPreview = dynamic(() => import("@/components/three/LandingPreview"), { ssr: false });
@@ -41,6 +46,9 @@ export default function LandingPage() {
   const [logosStance, setLogos] = useState("");
   const [pathosStance, setPathos] = useState("");
   const [focus, setFocus] = useState(1); // referee in the middle of the turntable
+  const { quota } = useQuota();
+  const [authOpen, setAuthOpen] = useState(false);
+  const [pricingOpen, setPricingOpen] = useState(false);
 
   useEffect(() => setMounted(true), []);
 
@@ -59,6 +67,7 @@ export default function LandingPage() {
       language: lang,
     };
     sessionStorage.setItem("arena-config", JSON.stringify(cfg));
+    sessionStorage.removeItem("arena-consumed"); // fresh debate → fresh quota spend
     router.push("/arena");
   };
 
@@ -87,7 +96,15 @@ export default function LandingPage() {
             </h1>
             <p className="mt-1 text-[10px] uppercase tracking-[0.3em] text-cyan-200/70 sm:text-xs sm:tracking-[0.55em] md:text-sm">{t("tagline")}</p>
           </div>
-          <LanguagePicker />
+          <div className="flex items-center gap-2.5">
+            {quota && quota.limit >= 0 && (
+              <span className="hidden rounded-xl border border-slate-700/60 bg-slate-950/60 px-3 py-2 text-[10px] font-bold text-cyan-300 sm:block" title={t("debates_left")}>
+                ⚡ {quota.left}/{quota.limit}
+              </span>
+            )}
+            <LanguagePicker />
+            <ProfileMenu quota={quota} onSignIn={() => setAuthOpen(true)} />
+          </div>
         </motion.header>
 
         {/* middle: setup console (glass card) */}
@@ -171,6 +188,13 @@ export default function LandingPage() {
             {t("voice_only")} · 16 languages · 4 rounds · 1 verdict
           </p>
         </motion.footer>
+
+        {/* professional ad slot — never inside the debate itself */}
+        <div className="pb-6 pt-2">
+          <AdSlot zone="landing" showAds={(quota?.plan ?? "free") === "free"} onUpgrade={() => setPricingOpen(true)} />
+        </div>
+        <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+        <PricingModal open={pricingOpen} onClose={() => setPricingOpen(false)} currentPlan={quota?.plan} />
       </div>
     </main>
   );

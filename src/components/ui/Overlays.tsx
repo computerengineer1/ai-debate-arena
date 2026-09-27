@@ -151,12 +151,28 @@ function ScoreRow({ icon, label, logos, pathos }: { icon: string; label: string;
 
 function VictoryOverlay() {
   const phase = useArenaStore((s) => s.phase);
+  const config = useArenaStore((s) => s.config);
+  const [copied, setCopied] = useState(false);
   const verdict = useArenaStore((s) => s.verdict);
   const danceMode = useArenaStore((s) => s.danceMode);
   const revealed = useArenaStore((s) => s.winnerRevealed);
   const { t } = useT();
   const router = useRouter();
   const [konami, setKonami] = useState(0);
+
+  const share = async () => {
+    const winner = verdict?.winner === "pathos" ? "PATHOS" : "LOGOS";
+    const text = `🤖⚔️ ${winner} won a 4-round cinematic AI debate on "${config?.topic ?? "AI"}" — real voices, zero subtitles. Try it free:`;
+    const url = typeof location !== "undefined" ? location.origin : "";
+    try {
+      if (navigator.share) await navigator.share({ text, url });
+      else {
+        await navigator.clipboard.writeText(`${text} ${url}`);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1600);
+      }
+    } catch { /* user cancelled */ }
+  };
 
   /* Easter egg #1: Konami code → dance mode */
   useEffect(() => {
@@ -234,6 +250,12 @@ function VictoryOverlay() {
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-3">
+              <button
+                onClick={() => void share()}
+                className="rounded-xl border border-slate-600 bg-slate-900/70 px-5 py-2.5 text-sm font-bold text-slate-200 backdrop-blur transition hover:scale-105 hover:border-cyan-400/60"
+              >
+                {copied ? `✓ ${t("copied")}` : `📣 ${t("share")}`}
+              </button>
               <button
                 onClick={() => {
                   const next = !useArenaStore.getState().danceMode;

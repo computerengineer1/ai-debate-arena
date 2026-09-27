@@ -25,6 +25,10 @@ import { audioBus } from "@/lib/client/audio";
 import { score } from "@/lib/client/music";
 import { useArenaStore } from "@/store/useArenaStore";
 import { useT } from "@/lib/client/useT";
+import { guestToken } from "@/lib/client/useQuota";
+import { useSession } from "next-auth/react";
+import AuthModal from "@/components/ui/AuthModal";
+import PricingModal from "@/components/ui/PricingModal";
 import type { DebateConfig } from "@/lib/types";
 
 const ArenaCanvas = dynamic(() => import("@/components/three/ArenaCanvas"), {
@@ -82,9 +86,12 @@ export default function ArenaPage() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
   const [needResume, setNeedResume] = useState(false);
+  const [authWall, setAuthWall] = useState(false);
+  const [pricingOpen, setPricingOpen] = useState(false);
   const started = useRef(false);
   const cfgRef = useRef<DebateConfig | null>(null);
   const { t } = useT();
+  const { status: sessionStatus } = useSession();
 
   /* boot the show exactly once per real mount */
   useEffect(() => {
@@ -120,10 +127,41 @@ export default function ArenaPage() {
     if (nav?.type === "reload") {
       setNeedResume(true);
     } else {
-      void director.start(cfg);
+      void bootWithQuota(cfg);
     }
     return unsub;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
+
+  /** Quota gate: spend one weekly debate BEFORE the show boots.
+   *  401 → guest sign-in wall · 402 → pricing wall · 429 → error card. */
+  async function bootWithQuota(cfg: DebateConfig) {
+    if (sessionStorage.getItem("arena-consumed") !== "1") {
+      try {
+        const r = await fetch("/api/quota", { method: "POST", headers: { "x-guest-token": guestToken() } });
+        if (r.status === 401) { setAuthWall(true); return; }
+        if (r.status === 402) { setPricingOpen(true); return; }
+        if (!r.ok) {
+          const b = (await r.json().catch(() => ({}))) as { error?: string };
+          useArenaStore.getState().fail(b.error || "Quota service unavailable");
+          return;
+        }
+        sessionStorage.setItem("arena-consumed", "1");
+      } catch {
+        /* network hiccup → fail open so the show never bricks */
+      }
+    }
+    void director.start(cfg);
+  }
+
+  /* after signing in from the wall: retry the boot automatically */
+  useEffect(() => {
+    if (authWall && sessionStatus === "authenticated" && cfgRef.current) {
+      setAuthWall(false);
+      void bootWithQuota(cfgRef.current);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authWall, sessionStatus]);
 
   /* teardown that survives StrictMode: defer by a tick; a remount cancels it */
   useEffect(() => {
@@ -176,7 +214,7 @@ export default function ArenaPage() {
 
   const startNow = () => {
     setNeedResume(false);
-    if (cfgRef.current) void director.start(cfgRef.current);
+    if (cfgRef.current) void bootWithQuota(cfgRef.current);
   };
 
   return (
@@ -192,6 +230,8 @@ export default function ArenaPage() {
       <ControlBar />
       <Overlays />
       {needResume && <ResumeCard onStart={startNow} />}
+      <AuthModal open={authWall} onClose={() => setAuthWall(false)} reason="wall" />
+      <PricingModal open={pricingOpen} onClose={() => setPricingOpen(false)} />
 
       {/* corner branding */}
       <div className="pointer-events-none absolute bottom-[6.5vh] right-3 z-20 hidden text-[9px] uppercase tracking-[0.35em] text-slate-600 sm:block rtl:right-auto rtl:left-3">
