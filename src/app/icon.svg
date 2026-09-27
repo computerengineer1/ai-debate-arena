@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset="0.55" stop-color="#818cf8"/>
+      <stop offset="1" stop-color="#fb7185"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#03050e"/>
+  <circle cx="32" cy="32" r="24" fill="none" stroke="url(#g)" stroke-width="2.5" opacity="0.85"/>
+  <!-- scales of justice -->
+  <path d="M32 16v26M20 42h24M32 20l-10 4m10-4l10 4" stroke="#fbbf24" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+  <path d="M17 26a5 5 0 0 0 10 0z" fill="#38bdf8"/>
+  <path d="M37 26a5 5 0 0 0 10 0z" fill="#fb7185"/>
+  <!-- sound waves -->
+  <path d="M12 32c2-4 2-8 0-12M52 32c-2-4-2-8 0-12" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.7"/>
+  <circle cx="32" cy="46" r="2.4" fill="#fbbf24"/>
+</svg>

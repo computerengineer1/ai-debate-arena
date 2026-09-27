@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────── cinematic base ─────────────────────── */
+
+:root {
+  --font-display: "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+  background: #03050e;
+  color: #e2e8f0;
+  font-family: var(--font-display);
+  overscroll-behavior: none;
+}
+
+body {
+  background:
+    radial-gradient(1200px 700px at 70% -10%, rgba(14, 165, 233, 0.09), transparent 60%),
+    radial-gradient(900px 600px at 15% 110%, rgba(244, 63, 94, 0.07), transparent 55%),
+    radial-gradient(800px 500px at 50% 50%, rgba(251, 191, 36, 0.03), transparent 70%),
+    #03050e;
+}
+
+::selection {
+  background: rgba(34, 211, 238, 0.35);
+  color: #fff;
+}
+
+/* thin neon scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #0a0f22; }
+::-webkit-scrollbar-thumb { background: #164e63; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #0e7490; }
+
+/* ─────────────────────── utilities ─────────────────────── */
+
+@layer utilities {
+  /* faint CRT scanlines over the whole arena */
+  .scanlines::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 25;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 3px,
+      rgba(0, 0, 0, 0.055) 3px,
+      rgba(0, 0, 0, 0.055) 4px
+    );
+    mix-blend-mode: multiply;
+  }
+
+  .text-glow-cyan { text-shadow: 0 0 24px rgba(34, 211, 238, 0.55), 0 0 60px rgba(34, 211, 238, 0.25); }
+  .text-glow-rose { text-shadow: 0 0 24px rgba(251, 113, 133, 0.55), 0 0 60px rgba(251, 113, 133, 0.25); }
+  .text-glow-gold { text-shadow: 0 0 24px rgba(251, 191, 36, 0.55), 0 0 60px rgba(251, 191, 36, 0.3); }
+
+  .glass-panel {
+    @apply rounded-2xl border border-slate-700/40 bg-slate-950/60 backdrop-blur-xl;
+  }
+
+  .ripple-host { position: relative; overflow: hidden; }
+  .ripple-dot {
+    position: absolute;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.45);
+    transform: scale(0);
+    animation: ripple-out 0.7s ease-out forwards;
+    pointer-events: none;
+  }
+}
+
+/* ─────────────────────── keyframes ─────────────────────── */
+
+@keyframes ripple-out {
+  to { transform: scale(4); opacity: 0; }
+}
+
+@keyframes drift {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-14px) rotate(1.5deg); }
+}
+
+@keyframes title-flicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.6; }
+  94% { opacity: 1; }
+  97% { opacity: 0.85; }
+  98% { opacity: 1; }
+}
+
+.title-flicker { animation: title-flicker 7s linear infinite; }
+.chip-drift { animation: drift 7s ease-in-out infinite; }
+
+/* ── E2E headless mode: software WebGL + backdrop-blur = melted frames.
+      scripts/e2e-visual.cjs sets <html data-e2e> to skip glass blurs. ── */
+html[data-e2e] [class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html[data-e2e] .scanlines::after { display: none; }
+
+/* ── runtime perf-drop (governor): kill the GPU-expensive cosmetics ── */
+html[data-perf="low"] .scanlines::after { display: none; }
+html[data-perf="low"] [class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* safe-area insets for notched phones */
+.safe-b { padding-bottom: env(safe-area-inset-bottom, 0px); }
