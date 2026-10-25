@@ -294,7 +294,7 @@ The full template is in **.env.example**. Keep secrets on the server and configu
 | **GITHUB_CLIENT_ID**, **GITHUB_CLIENT_SECRET** | Optional | GitHub OAuth. |
 | **DISCORD_CLIENT_ID**, **DISCORD_CLIENT_SECRET** | Optional | Discord OAuth. |
 | **UPSTASH_REDIS_REST_URL**, **UPSTASH_REDIS_REST_TOKEN** | Optional | Persistent storage for quotas, profiles, and subscriptions. |
-| **REDIS_URL** | Optional | Redis cache integration point noted by the cache configuration. Verify the selected cache backend before relying on it. |
+| **REDIS_URL** | Optional | Reserved for a future/drop-in Redis cache backend; the current LRU script/audio cache is in memory and does not become shared just by setting this variable. |
 | **APP_URL** | Optional | Public-origin override used by application cache keys. |
 | **LS_CHECKOUT_ORATOR**, **LS_CHECKOUT_LEGEND** | Optional | Lemon Squeezy hosted checkout URLs. |
 | **LS_VARIANT_ORATOR**, **LS_VARIANT_LEGEND** | Optional | Product variant IDs mapped to subscription plans by the webhook. |
@@ -360,7 +360,7 @@ All routes are implemented as Next.js App Router handlers. JSON request and resp
 | **POST** | **/api/profile** | Update a signed-in member's display name, bio, and title. |
 | **GET** | **/api/billing/plans** | Return the plan catalogue and configured checkout URLs. |
 | **POST** | **/api/billing/webhook** | Verify and process configured Lemon Squeezy events. |
-| **GET** | **/api/auth/*** | Auth.js / NextAuth OAuth and session handlers. |
+| **GET** | **/api/auth/[...nextauth]** | Auth.js / NextAuth OAuth and session handlers. |
 | **GET** | **/ads.txt** | Return the publisher record when AdSense is configured. |
 
 ### Debate endpoint overview
